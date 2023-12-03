@@ -87,17 +87,18 @@ int main()
         elements[0] = splitString(elements[0], ':')[1];
         //printVector(elements);
 
-        bool gameValid{ true };
+        std::unordered_map<std::string, int > drawDice
+        {
+            // key : (dice, quantity)
+            {"red", 0},
+            {"green", 0},
+            {"blue", 0}
+        };
+
         for (auto& element : elements)
         {
-            std::unordered_map<std::string, int > drawDice
-            {
-                // key : (dice, quantity)
-                {"red", 0},
-                {"green", 0},
-                {"blue", 0}
-            };
-            std::cout << element;
+
+            std::cout << element << std::endl;
             std::vector<std::string> splitElement{ splitString(element, ',') };
             //printVector(splitElement);
 
@@ -107,32 +108,23 @@ int main()
                 int rollValue = std::stoi(roll, &pos);
                 std::string diceType{ roll.substr(pos+1) };
 
-                drawDice[diceType] += rollValue;
 
+                if (drawDice[diceType] < rollValue)
+                {
+                    drawDice[diceType] = rollValue;
+                }
             }
 
-            if (drawDice["red"] > totalDice["red"] || 
-                drawDice["green"] > totalDice["green"] ||
-                drawDice["blue"] > totalDice["blue"])
-            {
-                gameValid = false;
-            }
-            std::cout << " => " << gameValid << std::endl;
         }
 
-        if (gameValid)
-        {
-            gameSum += gameId;
-        }
+        gameSum += drawDice["red"] * drawDice["green"] * drawDice["blue"];
+
+        std::cout << gameSum << std::endl;
 
     }
-    
-    //std::cout << "red: " << drawDice["red"] << std::endl;
-    //std::cout << "green: " << drawDice["green"] << std::endl;
-    //std::cout << "blue: " << drawDice["blue"] << std::endl;
 
     file.close();
-    std::cout << gameSum << std::endl;
+
 
     return 0;
 }
