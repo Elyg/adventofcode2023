@@ -1,0 +1,6 @@
+﻿################################################################################
+# This .gitignore file was automatically created by Microsoft(R) Visual Studio.
+################################################################################
+
+/day1/cpp/AOC_Day1/.vs/AOC_Day1
+/day3/cpp/AOC_Day3
