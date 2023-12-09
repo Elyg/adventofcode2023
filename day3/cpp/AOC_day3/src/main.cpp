@@ -2,7 +2,7 @@
 #include <iostream>
 #include <string>
 #include <vector>
-
+#include <ranges>
 
 template <typename T>
 void printVector(const std::vector<T> &vec) {
@@ -12,54 +12,47 @@ void printVector(const std::vector<T> &vec) {
     }
     std::cout << "]" << std::endl;
 }
-
-int clamp(int value, int minValue, int maxValue) {
-    return std::max(minValue, std::min(value, maxValue));
-}
-
-int getIndex(int row, int col, int offset) {
-    return (row * offset) + col;
-}
-
-struct gridData
+bool checkNeighs(int idx, int start, int end, int offset, int rows)
 {
-    int offset{ -1 };
-    std::vector<char> array{};
-} schematic;
 
-std::vector<int> getNeighs(gridData &schematic, int index) {
-    
-    int rows = schematic.array.size() / schematic.offset;
+    int row = floor(idx / offset);
+    int col = idx % offset;
+    bool isNeigh{ false };
 
-    int row = floor(index / schematic.offset);
-    int col = index % schematic.offset;
-    
-
-    std::vector<int> neighs;
-    for (int i = -1; i <= 1; ++i) 
+    for (int i=-1; i<=1; ++i)
     {
-        for (int j = -1; j <= 1; ++j) 
+        for (int j=-1; j<=1; ++j)
         {
             int newRow = row + i;
             int newCol = col + j;
-
-            // Check if the indices are within bounds
-            if (newRow >= 0 && newRow < rows && newCol >= 0 && newCol < schematic.offset) 
+ 
+            int _idx = idx + j + (i*offset);
+            if (_idx == idx)
             {
-                int neighborIndex = getIndex(newRow, newCol, schematic.offset);
-                if (neighborIndex != index)
+                continue;
+            }
+
+            if (newRow >= 0 && newRow < rows && newCol >= 0 && newCol < offset)
+            {
+                if (_idx >= start && _idx <= end)
                 {
-                    neighs.push_back(neighborIndex);
+                    std::cout << _idx << std::endl;
+                    isNeigh = true;
+                    break;
 
-
-                 }
-
+                }
             }
         }
     }
-
-    return neighs;
+    return isNeigh;
 }
+
+struct numData
+{
+    std::string num = "";
+    int start_idx = -1;
+    int end_idx = -1;
+};
 
 
 int main()
@@ -73,94 +66,76 @@ int main()
         return 1;
     }
 
-
+    std::vector<numData> nums;
+    std::vector<int> gearLocs;
+    int lineId{ 0 };
+    int offset{ -1 };
+    int totalSum{ 0 };
     while (file)
     {
         std::string line;
         std::getline(file, line);
-        std::cout << line << std::endl;
+        //std::cout << line << std::endl;
         if (line.empty())
         {
             continue;
         }
-
-        if (schematic.offset == -1)
+        if (offset == -1)
         {
-            schematic.offset = int(line.length());
-            //std::cout << line.length() << std::endl << std::endl;
+            offset = line.size();
         }
-        
-        for (char ch : line)
+        for(int i=0; i<line.size(); i++)
         {
-            schematic.array.push_back(ch);
+            char ch = line[i];
+            if (isdigit(ch))
+            {
+                numData n;
+                n.start_idx = i+(offset*lineId);
+                int k{ i };
+                while (isdigit(line[k]) && k<line.size())
+                {
+                    n.num += line[k];
+                    k++;
+                }
+                n.end_idx = (k-1)+(offset * lineId);
+                std::cout << n.num << " " << n.start_idx << " " << n.end_idx;
+                nums.push_back(n);
+                i = k;
+            }
         }
-
-        //printVector(schematic.array); 
+        for (int i = 0; i < line.size(); i++)
+        {
+            if (line[i] == '*')
+            {
+                gearLocs.push_back(i+(offset * lineId));
+            }
+        }
+        lineId++;
+        std::cout << std::endl;
+ 
     }
 
     file.close();
-
-    int totalSum = 0;
-    std::string num{ "" };
-    bool numCorrect{ false };
-    for (int i = 0; i < schematic.array.size(); i++)
+    std::cout << "Start" << std::endl;
+    for (auto idx : gearLocs)
     {
-        
-        std::vector<int> neighs = getNeighs(schematic, i);
-       // for (auto neigh2 : neighs)
-        //{
-        //    std::cout << neigh2;
-        //}
-        //std::cout << std::endl;
-        
-        if (isdigit(schematic.array[i]))
+        std::vector<int> adjNums;
+        for (auto num : nums)
         {
-            num += schematic.array[i];
-
-
-            for (auto neigh : neighs)
+            bool check{ checkNeighs(idx, num.start_idx, num.end_idx, offset, lineId) };
+            if (check)
             {
-                if (schematic.array[neigh] != '.' && isdigit(schematic.array[neigh]) == false)
-                {
-                    numCorrect = true;
-                    break;
-                }
-            }
-            if ((i+1) % schematic.offset != 0 && i != 0)
-            {
-                continue;
-            }
-            
-            
+                adjNums.push_back(std::stoi(num.num));
+            }    
         }
-
-        //std::cout << num << std::endl;
-        if (numCorrect && num != "")
-        {
-                
-            totalSum += std::stoi(num);
-            //std::cout << "i: " << i << " " << num << std::endl;
-
-        }
-        num = "";
-        numCorrect = false; 
         
-
-        if (numCorrect && num != "" && schematic.array.size()-1 == i)
+        if (adjNums.size() == 2)
         {
-
-            totalSum += std::stoi(num);
-
-            num = "";
-            numCorrect = false;
+            totalSum += adjNums[0] * adjNums[1];
         }
-
-        
-    
     }
 
-    std::cout << "Result: " << std::endl;
-    std::cout << totalSum << std::endl;
+    std::cout << "Sum: " << totalSum <<  std::endl;
 
     return 0;
 }
