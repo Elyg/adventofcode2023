@@ -57,6 +57,40 @@ std::vector<int> stringToNums(const std::string numString)
     }
     return nums;
 }
+struct cardStruct
+{
+    int cardId = 0;
+    int winnerCount = 0;
+    std::vector<int> nums;
+    std::vector<int> winnerNums;
+};
+
+int traverseCards(const std::vector<cardStruct>& vec, cardStruct card)
+{
+    int sum{ 0 };
+    int cardId{ card.cardId };
+    int winnerCount{ card.winnerCount };
+
+    if (winnerCount == 0)
+    {
+        return 1;
+    }
+
+
+    if (winnerCount >= 1)
+    {
+        for (int i = cardId; i < cardId + winnerCount; ++i)
+        {
+            sum += traverseCards(vec, vec[i]);
+        }
+        sum += 1;
+    }
+
+    return sum;
+}
+
+
+
 
 int main()
 {
@@ -69,17 +103,18 @@ int main()
         return 1;
     }
 
-    int totalPoints{ 0 };
+    std::vector<cardStruct> cards;
     while (file)
     {
         std::string line;
         std::getline(file, line);
-        std::cout << line << std::endl;
+        //std::cout << line << std::endl;
         if (line.empty())
         {
             continue;
         }
 
+        int cardId{ stringToNums(splitString(line, ':')[0])[0]};
         std::string card{ splitString(line, ':')[1] };
         std::string numString{ splitString(card, '|')[0] };
         std::string numWinnersString{ splitString(card, '|')[1] };
@@ -87,8 +122,6 @@ int main()
         std::vector<int> nums{ stringToNums(numString) };
         std::vector<int> winnerNums{ stringToNums(numWinnersString) };
 
-        //printVector(nums);
-        //printVector(winnerNums);
 
         int winners{ 0 };
         for (auto num : nums)
@@ -99,26 +132,28 @@ int main()
             }
         }
 
-        if (winners)
-        {
-            if (winners == 1)
-            {
-                totalPoints += 1;
-                std::cout << 1 << std::endl;
-            }
-            else
-            {
-                totalPoints += std::pow(2, winners - 1);
-                std::cout << std::pow(2, winners - 1) << std::endl;
-            }
-            
-        }
+        cardStruct c;
+        c.cardId = cardId;
+        c.winnerCount = winners;
+        c.nums = nums;
+        c.winnerNums = winnerNums;
 
+        cards.push_back(c);
     }
 
     file.close();
 
-    std::cout << "Total: " << totalPoints << std::endl;
+    std::cout << cards.size() << ": " << std::endl;
+
+    int sum{ 0 };
+    for (auto card : cards)
+    {
+        sum += traverseCards(cards, card);
+        //std::cout << card.cardId << ": " << card.winnerCount << std::endl;
+    }
+    //sum += cards.size();
+
+    std::cout << "Total: " << sum << std::endl;
 
     return 0;
 }
